@@ -47,3 +47,10 @@ write.csv(grant_email_sub,'contactpi_emails_2022v2024.csv',row.names=F)
 
 length(unique(grant_pis$contact_pi)) # 50563
 nrow(grant_email_sub) # 28507
+
+## for web scraper, get a list of all missing an email and find their first project
+all_contacts <- grant_pis |> select(web_id, contact_pi) |>
+              filter(!duplicated(contact_pi))
+have_emails <- grant_email_sub$pi
+missing <- all_contacts |> filter(!contact_pi %in% have_emails)
+sink('webid_missing_contacts.txt')
