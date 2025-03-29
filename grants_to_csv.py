@@ -5,6 +5,8 @@ previous script
 """
 import pickle
 import polars as pl
+import re
+
 def extract_pi(pi: dict) -> str:
     """
     principal_investigators element to strings
@@ -37,11 +39,13 @@ def main():
         ginfo = {k:v for k,v in grant.items() if k in keep}
         # unnest and add org
         ginfo['org'] = grant.get('organization',{}).get('org_name', '')
+        ginfo['web_id'] = re.sub('.*/','',grant.get('project_detail_url',''))
         for pi in pis:
             pi_row = {"pi": pi, 'contact_pi': contact, **ginfo}
             per_pi.extend([pi_row])
     d = pl.DataFrame(per_pi)
     d.write_csv("FY2024_PI-repeat.csv")
+    return d
 
 if __name__ == "__main__":
-    main()
+    d = main()
