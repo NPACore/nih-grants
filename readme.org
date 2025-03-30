@@ -1,0 +1,187 @@
+#+TITLE: NIH Funding 2024
+
+* Notes
+
+#+begin_src R :session :exports none
+pacman::p_load(dplyr, tidyr, ggplot2)
+fmt <- function(d) mutate(d, across(is.numeric, \(x) format(x, big.mark = ",", digits=2, scientific=F)))
+
+# NOTE: each PI of 1 project has own row
+d <- read.csv('./FY2024_PI-repeat.csv')
+# get just project
+proj <- d |>
+  group_by(project_num) |>
+  mutate(n_pi=n()) |>
+  filter(contact_pi == pi) |>
+  select(-pi) |>
+  mutate(letter=substr(project_num,2,2))
+names(proj)
+
+#+end_src
+
+#+RESULTS:
+| contact_pi         |
+| project_num        |
+| award_type         |
+| award_amount       |
+| project_start_date |
+| project_end_date   |
+| budget_start       |
+| budget_end         |
+| direct_cost_amt    |
+| indirect_cost_amt  |
+| org                |
+| web_id             |
+| n_pi               |
+| letter             |
+
+#+begin_src R :session :rownames yes
+proj |> ungroup() |>
+  summarise(n_projects=n(),
+            n_organizatoins=length(unique(org)),
+            PIperProj_mean = mean(n_pi),
+            across(c(direct=direct_cost_amt,
+                     indirect=indirect_cost_amt,
+                     awarded=award_amount),
+                   c(total=\(x) sum(x,na.rm=T),
+                     median=\(x) median(x, na.rm=T)))) |>
+  fmt() |>
+  t()
+#+end_src
+
+#+RESULTS:
+| n_projects      | 79,374         |
+| n_organizatoins | 2,888          |
+| PIperProj_mean  | 2.6            |
+| direct_total    | 29,847,146,202 |
+| direct_median   | 256,779        |
+| indirect_total  | 10,805,710,856 |
+| indirect_median | 112,671        |
+| awarded_total   | 42,169,253,525 |
+| awarded_median  | 388,750        |
+
+#+begin_src R :session :results graphics file :file img/proj_hist.png
+proj |> filter(letter %in% c('r','k','f')) |>
+ggplot() +
+  aes(x=direct_cost_amt, fill=letter) +
+  geom_histogram(alpha=.7, position='dodge') +
+  #geom_density(alpha=.7) +
+  scale_x_continuous(trans='log10', limits=c(5000,na)) +
+  cowplot::theme_cowplot() +
+  #facet_wrap(letter~.) +
+  labs(fill="grant", x="direct cost (log)", title="distribrution of award by type")
+#+end_src
+
+#+RESULTS:
+[[file:img/proj_hist.png]]
+
+** Top
+
+*** Institution
+#+begin_src R :session :colnames yes :rownames yes
+proj_org_smry <- proj |>
+  group_by(org) |>
+  summarise(
+    amount=sum(award_amount),
+    n_proj=n(),
+    n_R=length(which(letter=="R")),
+    n_K=length(which(letter=="K")),
+    mean_n_pi = mean(n_pi),
+    median_amount = median(award_amount),
+    direct_cost=sum(direct_cost_amt,na.rm=T),
+    indirect_cost=sum(indirect_cost_amt,na.rm=T))
+
+proj_org_smry |> arrange(-amount) |> head() |>fmt()
+#+end_src
+
+#+RESULTS:
+|   | org                                     | amount      | n_proj | n_R | n_K | mean_n_pi | median_amount | direct_cost | indirect_cost |
+|---+-----------------------------------------+-------------+--------+-----+-----+-----------+---------------+-------------+---------------|
+| 1 | JOHNS HOPKINS UNIVERSITY                | 967,554,620 | 1,826  | 922 | 191 |       2.8 | 404,828       | 716,140,229 | 267,819,162   |
+| 2 | UNIVERSITY OF CALIFORNIA, SAN FRANCISCO | 923,404,391 | 1,741  | 889 | 232 |       2.5 | 395,536       | 680,359,737 | 245,279,242   |
+| 3 | WASHINGTON UNIVERSITY                   | 901,899,906 | 1,455  | 805 | 123 |       3.1 | 393,750       | 679,451,125 | 223,127,797   |
+| 4 | UNIVERSITY OF MICHIGAN AT ANN ARBOR     | 840,742,085 | 1,663  | 965 | 155 |       2.7 | 388,052       | 613,767,433 | 228,042,377   |
+| 5 | UNIVERSITY OF PENNSYLVANIA              | 790,934,580 | 1,557  | 824 | 132 |       2.6 | 406,043       | 560,715,831 | 235,792,132   |
+| 6 | UNIVERSITY OF PITTSBURGH AT PITTSBURGH  | 747,102,172 | 1,435  | 858 | 114 |       2.7 | 400,107       | 542,554,963 | 209,616,818   |
+
+*** Contact PI
+#+begin_src R :session :results none
+proj_pi_smry <- proj |>
+  group_by(contact_pi) |>
+  # remove first and middle name
+  mutate(contact_pi=gsub(':.* ',':', toupper(contact_pi))) |>
+  summarise(
+    amount=sum(award_amount),
+    direct=sum(direct_cost_amt,na.rm=T),
+    n_proj=n(),
+    mean_n_pi = mean(n_pi),
+    median_amount = median(award_amount),
+    org=substr(paste(collapse=";", gsub('(UNIVERSITY|OF|SCHOOL|INSTITUTE) ?','', unique(org))),0,100))
+#+end_src
+
+
+#+begin_src R :session :results graphics file :file img/pi.png
+proj_pi_smry |> filter(amount>100) |>
+  mutate(projects=cut(n_proj, breaks=c(0,1,2,5,10,50,Inf)),
+         pis=cut(mean_n_pi, breaks=c(0,1,2,5,10,50))) |>
+  ggplot() +
+  aes(x=amount, fill=pis) +
+  geom_histogram() +
+  scale_x_continuous(trans='log10') +
+  cowplot::theme_cowplot() +
+  labs(fill="mean N co-pi", title="Amount per contact-PI")
+#+end_src
+
+
+#+RESULTS:
+[[file:img/pi.png]]
+
+#+begin_src R :session :results output
+summary(proj_pi_smry$amount)
+#+end_src
+
+#+RESULTS:
+:      Min.   1st Qu.    Median      Mean   3rd Qu.      Max.      NA's
+:         1    211712    462500    851443    858892 341743406      1620
+
+
+
+By total amount
+#+begin_src R :session :colnames yes :rownames yes
+proj_pi_smry |> arrange(-amount) |> head() |> fmt()
+#+end_src
+
+#+RESULTS:
+|   | contact_pi         | amount      | n_proj | mean_n_pi | median_amount | org                                                               |
+|---+--------------------+-------------+--------+-----------+---------------+-------------------------------------------------------------------|
+| 1 | 79478801:BRISCOE   | 341,743,406 |     43 |       1.0 | 1,117,108     | LEIDOS BIOMEDICAL RESEARCH, INC.                                  |
+| 2 | 10753426:NOLEN     | 289,804,000 |      2 |       1.5 | 144,902,000   | RESEARCH TRIANGLE                                                 |
+| 3 | 10829359:GROSS     | 110,114,217 |      2 |       4.0 | 55,057,108    | NEW YORK MEDICINE                                                 |
+| 4 | 78492086:MONTALVAN | 66,600,000  |      2 |       1.0 | 33,300,000    | WESTAT, INC.                                                      |
+| 5 | 1882258:BOXER      | 61,341,887  |      7 |       8.3 | 984,055       | CALIFORNIA, SAN FRANCISCO;MAYO CLINIC ROCHESTER                   |
+| 6 | 6190835:DIAMOND    | 60,794,967  |     12 |       5.5 | 765,900       | STANFORD ;MARYLAND BALTIMORE;WASHINGTON ;PITTSBURGH AT PITTSBURGH |
+
+By number of projects
+
+#+begin_src R :session :colnames yes :rownames yes
+proj_pi_smry |> filter(contact_pi!="NONE:") |> arrange(-n_proj) |> head() |>fmt()
+#+end_src
+
+#+RESULTS:
+|   | contact_pi        | amount      | n_proj | mean_n_pi | median_amount | org                                      |
+|---+-------------------+-------------+--------+-----------+---------------+------------------------------------------|
+| 1 | 79478801:BRISCOE  | 341,743,406 |     43 |         1 | 1,117,108     | LEIDOS BIOMEDICAL RESEARCH, INC.         |
+| 2 | 1891624:EBERLEIN  | 13,217,171  |     30 |        23 | 258,998       | WASHINGTON                               |
+| 3 | 8497898:SHEPPARD  | 359,300     |     28 |         1 | 14,250        | KEYSTONE SYMPOSIA                        |
+| 4 | 7039607:STEWART   | 2,027,360   |     25 |         1 | 40,000        | COLD SPRING HARBOR LABORATORY            |
+| 5 | 79112606:FREEDMAN | 46,535,946  |     25 |         1 | 225,042       | LEIDOS BIOMEDICAL RESEARCH, INC.         |
+| 6 | 6774622:PASCHE    | 4,805,560   |     23 |        21 | 50,162        | WAYNE STATE ;WAKE FOREST HEALTH SCIENCES |
+
+
+
+* Code
+See [[file:Makefile]].
+
+[[file:get_2024.py]] Uses the NIH reporter's api, but goes by state (and DC + PR) to avoid return limits. This saves all output (>700Mb!) to a pickle file.
+
+[[file:grants_to_csv.py]] parses the pickle to csv.
