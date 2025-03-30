@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        New script nih.gov
+// @name        nih email extract
 // @namespace   Violentmonkey Scripts
 // @match       https://reporter.nih.gov/project-details/*
 // @grant       GM_xmlhttpRequest
@@ -7,6 +7,10 @@
 // @author      -
 // @description 3/29/2025, 3:39:05 PM
 // ==/UserScript==
+
+LOAD_WAIT=15000
+REDIRECT_WAIT=15000
+DEBUG= false // don't load next page if this is true
 
 //EMAILS = []
 function click_email(){
@@ -30,7 +34,7 @@ function read_email() {
 // looking at all requests, watching for emails
 // inspect every fetched URL to see if it requested emails
 function check_request(){
-  if(/PiPoEmails/.test(this.responseURL)){
+  if(this.readyState == 4 && /PiPoEmails/.test(this.responseURL)){
     console.log(this)
     save_email(this.response)
   }
@@ -38,22 +42,34 @@ function check_request(){
 
 // send email json to db server. get next profile id and go to there
 function save_email(json_email){
+  pidata=JSON.parse(json_email);
+  pidata['page'] = window.location.pathname;
+  send_data = JSON.stringify(pidata);
+  console.log("sending", send_data);
   GM_xmlhttpRequest({
   method: "POST",
   url: "http://www.xn--4-cmb.com/c/collect_nih_email.pl",
-  data: json_email,
+  data: send_data,
   headers: {
-    "Content-Type": "application/x-www-form-urlencoded"
+    "Content-Type": "application/json"
   },
   onload: function(response) {
-    console.log(`got message DB server: ${response.responesText}`);
+    console.log(`got message DB server (${response.status}): ${response.responseText}`);
+    // don't loop forever if there is an error
+    if(response.status != 200) {
+      console.log(response);
+      console.log(json_email);
+      console.log("FAILED TO UDPATE DB?! maybe reload page?")
+      return;
+    }
     if(/^http/.test(response.responseText)){
-      waittime = 2000;
-      console.log(`matches next profile. waiting ${waittime}ms and then going to next profile.`)
+      console.log(`matches next profile. waiting ${REDIRECT_WAIT}ms and then going to '${response.responseText}'.`)
       setTimeout(function() {
         console.log(`going to ${response.responseText}`);
-        location.assign(response.responseText);
-      }, waittime);
+        if(!DEBUG){
+          location.assign(response.responseText);
+        }
+      }, REDIRECT_WAIT);
     }
   }
 });
@@ -68,4 +84,4 @@ function save_email(json_email){
 })(XMLHttpRequest.prototype.open);
 
 // start everything off .5s after page load by finding and clicking the email button
-window.addEventListener('load', function() { setTimeout(click_email, 500); })
+window.addEventListener('load', function() { setTimeout(click_email, LOAD_WAIT); })
