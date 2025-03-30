@@ -35,7 +35,7 @@ names(proj)
 | n_pi               |
 | letter             |
 
-#+begin_src R :session :rownames yes
+#+begin_src R :exports both :session :rownames yes
 proj |> ungroup() |>
   summarise(n_projects=n(),
             n_organizatoins=length(unique(org)),
@@ -60,13 +60,13 @@ proj |> ungroup() |>
 | awarded_total   | 42,169,253,525 |
 | awarded_median  | 388,750        |
 
-#+begin_src R :session :results graphics file :file img/proj_hist.png
-proj |> filter(letter %in% c('r','k','f')) |>
+#+begin_src R :session :exports both :results graphics file :file img/proj_hist.png
+proj |> filter(letter %in% c('R','K','F')) |>
 ggplot() +
   aes(x=direct_cost_amt, fill=letter) +
   geom_histogram(alpha=.7, position='dodge') +
   #geom_density(alpha=.7) +
-  scale_x_continuous(trans='log10', limits=c(5000,na)) +
+  scale_x_continuous(trans='log10', limits=c(5000,NA)) +
   cowplot::theme_cowplot() +
   #facet_wrap(letter~.) +
   labs(fill="grant", x="direct cost (log)", title="distribrution of award by type")
@@ -78,7 +78,7 @@ ggplot() +
 ** Top
 
 *** Institution
-#+begin_src R :session :colnames yes :rownames yes
+#+begin_src R :exports both :session :colnames yes :rownames yes
 proj_org_smry <- proj |>
   group_by(org) |>
   summarise(
@@ -105,7 +105,7 @@ proj_org_smry |> arrange(-amount) |> head() |>fmt()
 | 6 | UNIVERSITY OF PITTSBURGH AT PITTSBURGH  | 747,102,172 | 1,435  | 858 | 114 |       2.7 | 400,107       | 542,554,963 | 209,616,818   |
 
 *** Contact PI
-#+begin_src R :session :results none
+#+begin_src R :exports both :session :results none
 proj_pi_smry <- proj |>
   group_by(contact_pi) |>
   # remove first and middle name
@@ -120,7 +120,7 @@ proj_pi_smry <- proj |>
 #+end_src
 
 
-#+begin_src R :session :results graphics file :file img/pi.png
+#+begin_src R :session :exports both :results graphics file :file img/pi.png
 proj_pi_smry |> filter(amount>100) |>
   mutate(projects=cut(n_proj, breaks=c(0,1,2,5,10,50,Inf)),
          pis=cut(mean_n_pi, breaks=c(0,1,2,5,10,50))) |>
@@ -136,7 +136,7 @@ proj_pi_smry |> filter(amount>100) |>
 #+RESULTS:
 [[file:img/pi.png]]
 
-#+begin_src R :session :results output
+#+begin_src R :session :exports both :results output
 summary(proj_pi_smry$amount)
 #+end_src
 
@@ -147,8 +147,10 @@ summary(proj_pi_smry$amount)
 
 
 By total amount
-#+begin_src R :session :colnames yes :rownames yes
-proj_pi_smry |> arrange(-amount) |> head() |> fmt()
+#+begin_src R :session :exports both :colnames yes :rownames yes
+proj_pi_smry |>
+  arrange(-amount) |>
+  head() |> fmt()
 #+end_src
 
 #+RESULTS:
@@ -163,8 +165,11 @@ proj_pi_smry |> arrange(-amount) |> head() |> fmt()
 
 By number of projects
 
-#+begin_src R :session :colnames yes :rownames yes
-proj_pi_smry |> filter(contact_pi!="NONE:") |> arrange(-n_proj) |> head() |>fmt()
+#+begin_src R :session :exports both :colnames yes :rownames yes
+proj_pi_smry |>
+  filter(contact_pi!="NONE:") |>
+  arrange(-n_proj) |>
+  head() |>fmt()
 #+end_src
 
 #+RESULTS:
