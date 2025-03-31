@@ -3,8 +3,11 @@
 # expect data to be json from nih PiPoEmail.
 # that data is behind recaptcha so using nih_userscript.js w/violentmonkey to capture and forward to
 # cgi-server hosting this file
+#
+# to kick off, visit collect_nih_email.pl?init
 # 
 # 20250329WF - init
+# 20250331WF - start page
 use strict; use warnings;
 use v5.40; use feature qw/say signatures/;
 use Data::Dumper qw/Dumper/;
@@ -21,7 +24,20 @@ $req = decode_entities($req);
 # $req like
 # '{"page": "https://sdafdsf/123456", "PI":{"profile_id":11932348,"first_name":null,"middle_name":null,"last_name":null,"is_contact_pi":true,"full_name":"MAREK, SCOTT ","title":null,"email":"smarek@wustl.edu"},"PO":{"first_name":null,"middle_name":null,"last_name":null,"full_name":"T, L A","email":"...@nih.gov"}}'
 
-
+# start process
+if($ENV{QUERY_STRING} =~ /init/){
+  my $dbh = DBI->connect('DBI:SQLite:emails/nih_emails.db', { RaiseError => 1, AutoCommit => 1 }) or die $DBI::errstr;
+  my ($next) = $dbh->selectrow_array("select id from pids where email is null ORDER BY RANDOM() limit 1");
+  $dbh->disconnect();
+  if(not $next){
+   say "Status: 500";
+   say "Content-type: text/plain\n";
+   say "All out of projects to scrape";
+  }
+  say "Status: 307";
+  say "Location: https://reporter.nih.gov/project-details/$next\n";
+  exit 0;
+}
 # no real input
 if(length($req) < 50){
    say "Status: 500";

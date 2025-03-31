@@ -1,0 +1,80 @@
+#+Title: NIH Contact Email
+
+Each grant/project page has a contact PI and PO. There can be many projects with the same PI and/or PO.
+The email for these contacts is not exported by the API. They are available on the web after clicking "view email."
+The request initiated by the button push requires recaptcha validation.
+
+See 
+ 1. https://violentmonkey.github.io/
+ 2. install userscript
+ 3. http://www.xn--4-cmb.com/c/collect_nih_email.pl?init
+
+* Collect via browser
+Using the greasemonkey "UserScript" (https://violentmonkey.github.io/), we can execute custom javascript to
+
+ 1. click the "view email" button [[file:nih_userscript.js]]
+ 2. collect the email address (and all returned json)
+ 3. post it to a DB server ([[file:collect_nih_email.pl]])
+ 4. get a new project URL to load and repeat
+
+The schema for this DB is in [[file:03_create_db.bash]]. The web DB only includes project ids that have contact pis not matched from other sources ([[file:02_webid_of_emailmissing.R]])
+
+** recaptcha
+Even with 15s delay on button click and 15s delay on refresh, recaptcah prompts every 4 if not every single new project page.
+
+* Merging with other data
+
+[[file:01_merge_emails2022.R]] uses a 2022 dataset to match contact PIs.
+
+The 2022 email dataframe is "only" 63560 rows long.
+There are ~ 9,000 fewer contact in the 2022 as there are contacts for all projects in FY 2024.
+
+#+begin_src R :session :export none :results none
+pacman::p_load(tidyr,dplyr,readxl)
+emails_all <- read_excel('2022-pi-email-report.xlsx')
+grant_pis <- read.csv('../FY2024_PI-repeat.csv')
+grant24merge22 <- read.csv('./contactpi_emails_2022v2024.csv')
+#+end_src
+
+
+#+begin_src R :session :exports both
+c_counts <- c(
+  c2022 = length(unique(emails_all$`Contact PI Email`)),
+  c2024 = length(unique(grant_pis$contact_pi)))
+#+end_src
+
+#+RESULTS:
+| 41585 |
+| 50563 |
+
+#+begin_src R :session :exports both
+diff(c_counts)
+#+end_src
+
+#+RESULTS:
+: 8978
+
+And of those maximally 41,585 overlapping, only 28,507 actually match (on exact combined first, middle, and last name).
+
+#+begin_src R :session
+length(unique(grant24merge22$contact_pi))
+#+end_src
+
+#+RESULTS:
+: 27445
+
+That leaves at least 13,000 unmatched.
+#+begin_src R :session
+length(unique(emails_all$`Contact PI Email`)) - nrow(grant24merge22)
+#+end_src
+
+#+RESULTS:
+: 13078
+
+TODO: so why is webid 22k instead of 13k?
+#+begin_src bash
+wc -l ./webid_missing_contacts.txt
+#+end_src
+
+#+RESULTS:
+: 22748 ./webid_missing_contacts.txt
