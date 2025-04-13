@@ -1,8 +1,10 @@
 #!/usr/bin/env Rscript
-pacman::p_load(dplyr)
+pacman::p_load(dplyr, readr)
 # for web scraper, get a list of all missing an email and find their first project
-grant_pis <- read.csv('FY2024_PI-repeat.csv')
-grant_email_sub <- read.csv("./contactpi_emails_2022v2024.csv")
+
+grant_pis <- read_csv('../grants_PI-repeat_FY-2001:2025.csv.gz') |>
+    filter(grepl("2024",pklsrc))
+grant_email_sub <- read_csv("./contactpi_emails_all.csv.gz")
 
 all_contacts <- grant_pis |>
     select(web_id, contact_pi) |>

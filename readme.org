@@ -187,6 +187,6 @@ proj_pi_smry |>
 * Code
 See [[file:Makefile]].
 
-[[file:get_2024.py]] Uses the NIH reporter's api, but goes by state (and DC + PR) to avoid return limits. This saves all output (>700Mb!) to a pickle file.
+[[file:get_grants.py]] Uses the NIH reporter's api, but goes by state (and DC + PR) to avoid return limits. This saves all output (>700Mb!) to a pickle file.
 
 [[file:grants_to_csv.py]] parses the pickle to csv.

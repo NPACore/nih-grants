@@ -9,4 +9,5 @@ dependencies = [
     "pandas",
     "polars>=1.26.0",
     "fastexcel>=0.13.0",
+    "xlsx2csv>=0.8.4",
 ]

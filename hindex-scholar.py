@@ -57,6 +57,8 @@ def scholar_lookup(pi) -> dict:
         return {}
 
     author = scholarly.fill(author)
+    # TODO: send all columns
+    # interst: where in author list, number of pubs
     a_keep = ['scholar_id','name','email_domain',
               'hindex', 'i10index',
               'hindex5y','i10index5y',
@@ -87,7 +89,10 @@ def search_by_pi_org():
     search scholar by first+last+organizaton
     2 in first 6 gets a hit
     """
-    d = pl.read_csv("FY2024_PI-repeat.csv", ignore_errors=True)
+    d_all = pl.read_csv("./grants_PI-repeat_FY-2001:2025.csv.gz",
+                        ignore_errors=True)
+
+    d = d_all.filter(d_all['pklsrc'] == 'data/2024.pkl')
     all_pis = pi_org_search_str(d)
     res_name = collect_searches(all_pis[0:5])
     return res_name
@@ -98,7 +103,7 @@ def search_by_email():
     search by 2022 email.
     2 of first 6 gets a hit (when email is lastname@institution)
     """
-    mail = pl.read_csv("contactpi_emails_2022v2024.csv")
+    mail = pl.read_csv("email/contactpi_emails_all.csv.gz")
     no_at_mails = [x.replace('@',' ') for x in mail['email']]
     res_email = collect_searches(no_at_mails[0:5])
     return res_email

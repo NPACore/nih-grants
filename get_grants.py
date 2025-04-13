@@ -7,6 +7,7 @@ import requests
 import time
 import pickle
 import os
+from warnings import warn
 APIURL = "https://api.reporter.nih.gov/v2/projects/search"
 
 REQ_LIMIT=500 #: max allowed per request
@@ -51,8 +52,11 @@ def nih_query_all(payload:dict, msg="") -> list:
         res = json.get('results')
         meta = json.get('meta')
 
+        if i == 0 and meta.get('total') >= QUERY_MAX:
+            warn(f"  {msg} total={meta.get('total')} >= {QUERY_MAX} query max. Will not be able to fetch all results.")
+
         if len(res) <= 0:
-            print(f"no results in {msg})")
+            warn(f"no results in {msg})")
             break
 
         collected_data.extend(res)
@@ -67,14 +71,15 @@ def nih_query_all(payload:dict, msg="") -> list:
         i = i+1
         time.sleep(.5) # dont hammer the server
 
-    if len(contact_pi_name) >= QUERY_MAX:
-        print(f"  {msg} total={len(collected_data)} at query maximum. truncated results?")
+    if len(collected_data) >= QUERY_MAX:
+        warn(f"  {msg} total={len(collected_data)} at query maximum. Check for truncated results?")
     return collected_data
 
 
 
-for year in reversed(range(2010,2025)): # last year not in range
-    pkl_fname = f'{year}.pkl'
+for year in reversed(range(2001,2026)): # last year not in range
+    os.makedirs('data', exist_okay=True)
+    pkl_fname = f'data/{year}.pkl'
     if os.path.isfile(pkl_fname):
         print(f"# have {pkl_fname} mv or rm to redo")
         continue

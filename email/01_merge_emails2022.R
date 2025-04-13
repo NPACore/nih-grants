@@ -13,44 +13,30 @@
 #  length(unique(grant_pis$contact_pi))  == 50563
 #
 # 20250329WF - init
-library(pacman)
-p_load(tidyr,dplyr,readxl)
-emails_all <- read_excel('2022-pi-email-report.xlsx')
-grant_pis <- read.csv('FY2024_PI-repeat.csv')
+# 20250413WF - move to larger email inputsj
+pacman::p_load(tidyr,dplyr,readxl, readr)
+source('00.2_combine_emails.R') # stem_contact
+emails_all <- read_csv('./emails_FY2015:2022.csv.gz') # ./00.2_combine_emails.R
+grant_pis <- read_csv('../grants_PI-repeat_FY-2001:2025.csv.gz') |>
+    filter(grepl("2024",pklsrc))
 
-emails <- emails_all |>
-    transmute(
-        email=`Contact PI Email`,
-        contact_pi=paste(sep=" ",
-                         `Contact PI First Name`,
-                         ifelse(is.na(`Contact PI Middle Name`),
-                                "",`Contact PI Middle Name`),
-                         `Contact PI Last Name`),
-        contact_pi=tolower(contact_pi),
-        project_num=`Project Number`,
-        main_num=gsub('-.*','',project_num),
-        org=`Organization`,
-        all_pis=`PI Name(s) All`,
-        award_type=`Application Type`,
-        cost_email=`Award Total $`)
 
 grant_contact <-
     grant_pis |>
-    filter(contact_pi == pi) |>
-    separate(contact_pi, c("contact_id", "contact_pi"), sep=":", fill="left") |>
-    mutate(contact_pi = tolower(contact_pi))
+    filter(contact_pi == pi, contact_pi != "") |>
+    separate(contact_pi, c("contact_id", "contact_pi"),
+             sep=":", fill="left") |>
+    mutate(contact_pi = stem_contact(contact_pi))
 
-grant_email <- merge(grant_contact,emails, by="contact_pi", suffixes=c(".grant",".email"))
+grant_email <- merge(grant_contact, emails_all,
+                     by="contact_pi",
+                     suffixes=c(".grant",".email"))
 
-grant_email_sub <- grant_email |> count(contact_pi, pi, email)
-write.csv(grant_email_sub,'contactpi_emails_2022v2024.csv',row.names=F)
+grant_email_sub <- grant_email |>
+    group_by(contact_pi, pi) |>
+    summarise(emails=paste(email, collapse=", "), n=n())
+
+write_csv(grant_email_sub, 'contactpi_emails_all.csv.gz')
 
 length(unique(grant_pis$contact_pi)) # 50563
-nrow(grant_email_sub) # 28507
-
-## for web scraper, get a list of all missing an email and find their first project
-all_contacts <- grant_pis |> select(web_id, contact_pi) |>
-              filter(!duplicated(contact_pi))
-have_emails <- grant_email_sub$pi
-missing <- all_contacts |> filter(!contact_pi %in% have_emails)
-sink('webid_missing_contacts.txt')
+nrow(grant_email_sub) #  with all nih FoI: 34233 (previously 28507)
