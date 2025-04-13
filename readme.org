@@ -1,13 +1,20 @@
 #+TITLE: NIH Funding 2024
 
+* Files
+curated files include
+ * [[file:grants_PI-repeat_FY-2001:2025.csv.gz]] - row per PI, repeated grants, see [[file:get_grants.py]] and [[file:grants_to_csv.py]]
+ * [[file:email/emails_FY2015:2022.csv.gz]] - coalesced FoI provided emails, see [[file:email/00.2_combine_emails.R]]
+
+
 * Notes
 
 #+begin_src R :session :exports none
-pacman::p_load(dplyr, tidyr, ggplot2)
+pacman::p_load(dplyr, tidyr, ggplot2, readr)
 fmt <- function(d) mutate(d, across(is.numeric, \(x) format(x, big.mark = ",", digits=2, scientific=F)))
 
 # NOTE: each PI of 1 project has own row
-d <- read.csv('./FY2024_PI-repeat.csv')
+d <- read_csv('./grants_PI-repeat_FY-2001:2025.csv.gz') |>
+    filter(grepl("2024", pklsrc))
 # get just project
 proj <- d |>
   group_by(project_num) |>
