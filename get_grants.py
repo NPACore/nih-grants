@@ -76,26 +76,31 @@ def nih_query_all(payload:dict, msg="") -> list:
     return collected_data
 
 
+def fetch_all(years=range(2001, 2026)):
+    for year in reversed(years):
+        os.makedirs('data', exist_ok=True)
+        pkl_fname = f'data/{year}.pkl'
+        if os.path.isfile(pkl_fname):
+            print(f"# have {pkl_fname} mv or rm to redo")
+            continue
 
-for year in reversed(range(2001,2026)): # last year not in range
-    os.makedirs('data', exist_okay=True)
-    pkl_fname = f'data/{year}.pkl'
-    if os.path.isfile(pkl_fname):
-        print(f"# have {pkl_fname} mv or rm to redo")
-        continue
+        year_data = []
+        for state in US_STATES:
+            print(f"## {state} {year}")
+            payload = {"criteria": {"fiscal_years":[year],
+                                    'org_states':[state]},
+                       'offset': 0,
+                       'limit': REQ_LIMIT, # 500
+                       }
+            state_year = nih_query_all(payload, msg=f"{state} {year}")
+            year_data.extend(state_year)
 
-    year_data = []
-    for state in US_STATES:
-        print(f"## {state} {year}")
-        payload = {"criteria": {"fiscal_years":[year],
-                                'org_states':[state]},
-                   'offset': 0,
-                   'limit': REQ_LIMIT, # 500
-                   }
-        state_year = nih_query_all(payload, msg=f"{state} {year}")
-        year_data.extend(state_year)
+        # have now combined all stats of this year into giant list
+        # save out as pickle
+        with open(pkl_fname, 'wb') as pkl:
+            pickle.dump(year_data, pkl)
 
-    # have now combined all stats of this year into giant list
-    # save out as pickle
-    with open(pkl_fname, 'wb') as pkl:
-        pickle.dump(year_data, pkl)
+
+if __name__ == "__main__":
+    years = list(range(2015, 2026))  # last year not in range
+    fetch_all(years)
