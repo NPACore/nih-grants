@@ -5,6 +5,20 @@ curated files include
  * [[file:grants_PI-repeat_FY-2001:2025.csv.gz]] - row per PI, repeated grants, see [[file:get_grants.py]] and [[file:grants_to_csv.py]]
  * [[file:email/emails_FY2015:2022.csv.gz]] - coalesced FoI provided emails, see [[file:email/00.2_combine_emails.R]]
 
+~data/~ is large and not tracked. ~csv.gz~ are in LFS (~git lfs pull~) See also [[#Code]] section for more.
+
+#+begin_src bash :colnames '(size file) :export results
+du -h *.csv.gz email/emails_*csv.gz data/{1985,2025}.pkl data/abstracts.csv.zip
+#+end_src
+
+#+RESULTS:
+| size | file                                 |
+|------+--------------------------------------|
+| 92M  | grants_PI-repeat_FY-2001:2025.csv.gz |
+| 19M  | email/emails_FY2015:2022.csv.gz      |
+| 110M | data/1985.pkl                        |
+| 659M | data/2025.pkl                        |
+| 962M | data/abstracts.csv.zip               |
 
 * Notes
 
@@ -81,6 +95,58 @@ ggplot() +
 
 #+RESULTS:
 [[file:img/proj_hist.png]]
+
+** Study sections
+Popular study sections
+#+begin_src bash :colnames yes
+duckdb -csv -separator $'\t' data/abstracts.csv "
+  select srg,
+         count(*) as n_grants,
+         min(year) as firstyear,
+         max(year) as lastyear
+  from abstracts
+  group by srg
+  order by n desc
+  limit 10;"
+#+end_src
+
+#+RESULTS:
+| srg  |     n | firstyear | lastyear |
+|------+-------+-----------+----------|
+| NCI  | 59805 |      1996 |     2025 |
+| SRC  | 43821 |      1985 |     2014 |
+| NSS  | 40185 |      1985 |     2025 |
+| RIRG | 33931 |      1996 |     2016 |
+| DDK  | 24343 |      1987 |     2025 |
+| HLBP | 16105 |      1994 |     2025 |
+| STC  | 15216 |      1985 |     1997 |
+| CHHD | 12724 |      1997 |     2025 |
+| SSS  | 12074 |      1985 |     2000 |
+| SAT  | 11388 |      1985 |     2025 |
+
+Sections matching ~fMRI~
+
+#+begin_src bash :colnames yes
+duckdb -csv -separator $'\t' data/abstracts.csv "
+ select
+  count(*) as n_grants, srg, section
+  from abstracts where abstract ilike '%fMRI%'
+  group by section, srg order by n_grants desc limit 10;"
+#+end_src
+
+#+RESULTS:
+| n_grants | srg  | section                                                                       |
+|----------+------+-------------------------------------------------------------------------------|
+|     1081 | NPAS | Neural Basis of Psychopathology, Addictions and Sleep Disorders Study Section |
+|      759 | APDA | Adult Psychopathology and Disorders of Aging Study Section                    |
+|      660 | CPDD | Child Psychopathology and Developmental Disabilities Study Section            |
+|      610 | CP   | Cognition and Perception Study Section                                        |
+|      378 | LCOM | Language and Communication Study Section                                      |
+|      309 | NSS  | NSS                                                                           |
+|      277 | MESH | Biobehavioral Mechanisms of Emotion, Stress and Health Study Section          |
+|      250 | RIRG | Clinical Research Review Committee                                            |
+|      238 | NIDA | Career Development Education and Training Study Section                       |
+|      210 | COG  | Cognitive Neuroscience Study Section                                          |
 
 ** Top
 
@@ -192,8 +258,11 @@ proj_pi_smry |>
 
 
 * Code
-See [[file:Makefile]].
+  :PROPERTIES:
+  :CUSTOM_ID: code
+  :END:
 
-[[file:get_grants.py]] Uses the NIH reporter's api, but goes by state (and DC + PR) to avoid return limits. This saves all output (>700Mb!) to a pickle file.
-
-[[file:grants_to_csv.py]] parses the pickle to csv.
+  * [[file:Makefile]] will use [[file:get_grants.py]] to pull ~data/*.pkl~ grant information per year.
+  * [[file:get_grants.py]] Uses the NIH reporter's api, but goes by state (and DC + PR) to avoid return limits. This saves all output (>700Mb!) to a pickle file.
+  * [[file:grants_to_csv.py]] parses the pickle to csv.
+  * [[file:get_abstracts.py]] will extract the abstrats (~data/abstracts.csv.zip~).
