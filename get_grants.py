@@ -102,5 +102,5 @@ def fetch_all(years=range(2001, 2026)):
 
 
 if __name__ == "__main__":
-    years = list(range(2015, 2026))  # last year not in range
+    years = list(range(1985, 2026))  # last year not in range
     fetch_all(years)
