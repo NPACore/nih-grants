@@ -22,6 +22,146 @@ du -h *.csv.gz email/emails_*csv.gz data/{1985,2025}.pkl data/abstracts.csv.zip
 
 * Notes
 
+** Avaliable data
+Each grant has a nested data structure
+#+begin_src python :session  :results output :exports results
+import pickle
+from rich.pretty import pprint
+with open('data/2025.pkl', 'rb') as f:
+   d = pickle.load(f)
+
+# data is public but ...
+def censor(x):
+    x[0]['full_name'] = 'CENSORED'
+    x[0]['last_name'] = 'CENSORED'
+censor(d[0]['principal_investigators'])
+censor(d[0]['program_officers'])
+
+pprint(d[0], max_string=20)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+{
+│   'appl_id': 11142308,
+│   'subproject_id': None,
+│   'fiscal_year': 2025,
+│   'project_num': '5F31ES036890-02',
+│   'project_serial_num': 'ES036890',
+│   'organization': {
+│   │   'org_name': 'UNIVERSITY OF ALABAM'+15,
+│   │   'city': None,
+│   │   'country': None,
+│   │   'org_city': 'BIRMINGHAM',
+│   │   'org_country': 'UNITED STATES',
+│   │   'org_state': 'AL',
+│   │   'org_state_name': None,
+│   │   'dept_type': 'NEUROLOGY',
+│   │   'fips_country_code': None,
+│   │   'org_duns': ['063690705'],
+│   │   'org_ueis': ['YND4PLMC9AN7'],
+│   │   'primary_duns': '063690705',
+│   │   'primary_uei': 'YND4PLMC9AN7',
+│   │   'org_fips': 'US',
+│   │   'org_ipf_code': '1288803',
+│   │   'org_zipcode': '352940001',
+│   │   'external_org_id': 1288803
+│   },
+│   'award_type': '5',
+│   'activity_code': 'F31',
+│   'award_amount': 40828,
+│   'is_active': True,
+│   'project_num_split': {
+│   │   'appl_type_code': '5',
+│   │   'activity_code': 'F31',
+│   │   'ic_code': 'ES',
+│   │   'serial_num': '036890',
+│   │   'support_year': '02',
+│   │   'full_support_year': '02',
+│   │   'suffix_code': ''
+│   },
+│   'principal_investigat'+3: [
+│   │   {
+│   │   │   'profile_id': 78314578,
+│   │   │   'first_name': 'CENSORED',
+│   │   │   'middle_name': '',
+│   │   │   'last_name': 'CENSORED',
+│   │   │   'is_contact_pi': True,
+│   │   │   'full_name': 'CENSORED',
+│   │   │   'title': 'GRADUATE STUDENT TRA'+4
+│   │   }
+│   ],
+│   'contact_pi_name': 'ADAMSON, ASHLEY ',
+│   'program_officers': [
+│   │   {
+│   │   │   'first_name': 'CENSORED',
+│   │   │   'middle_name': '',
+│   │   │   'last_name': 'CENSORED',
+│   │   │   'full_name': 'CENSORED'
+│   │   }
+│   ],
+│   'agency_ic_admin': {
+│   │   'code': 'ES',
+│   │   'abbreviation': 'NIEHS',
+│   │   'name': 'National Institute o'+31
+│   },
+│   'agency_ic_fundings': [
+│   │   {
+│   │   │   'fy': 2025,
+│   │   │   'code': 'ES',
+│   │   │   'name': 'National Institute o'+31,
+│   │   │   'abbreviation': 'NIEHS',
+│   │   │   'total_cost': 40828.0,
+│   │   │   'direct_cost_ic': 40828.0,
+│   │   │   'indirect_cost_ic': 0.0
+│   │   }
+│   ],
+│   'cong_dist': 'AL-07',
+│   'spending_categories': None,
+│   'project_start_date': '2024-08-01T00:00:00',
+│   'project_end_date': '2027-07-31T00:00:00',
+│   'organization_type': {
+│   │   'name': 'SCHOOLS OF MEDICINE',
+│   │   'code': '10',
+│   │   'is_other': False
+│   },
+│   'geo_lat_lon': {'lon': -86.799772, 'lat': 33.50591},
+│   'opportunity_number': 'PA-23-271',
+│   'full_study_section': {
+│   │   'srg_code': 'ZRG1',
+│   │   'srg_flex': None,
+│   │   'sra_designator_code': 'F03C',
+│   │   'sra_flex_code': 'K',
+│   │   'group_code': '20',
+│   │   'name': 'Special Emphasis Pan'+19
+│   },
+│   'award_notice_date': '2025-07-28T00:00:00',
+│   'is_new': False,
+│   'mechanism_code_dc': 'TR',
+│   'core_project_num': 'F31ES036890',
+│   'terms': '<21+ years old><Absc'+6443,
+│   'pref_terms': 'Adult;Aging;Air;Area'+1882,
+│   'abstract_text': 'Project Summary\nThe '+2798,
+│   'project_title': 'The role for cell cy'+64,
+│   'phr_text': 'Project Narrative\nTh'+811,
+│   'spending_categories_'+4: None,
+│   'agency_code': 'NIH',
+│   'covid_response': None,
+│   'arra_funded': 'N',
+│   'budget_start': '2025-08-01T00:00:00',
+│   'budget_end': '2026-07-31T00:00:00',
+│   'cfda_code': '93.113',
+│   'funding_mechanism': 'Training, Individual',
+│   'direct_cost_amt': 40828,
+│   'indirect_cost_amt': 0,
+│   'project_detail_url': 'https://reporter.nih'+29,
+│   'date_added': '2025-08-02T16:13:37'
+}
+#+end_example
+
+
+** Extracted
+The [[file:grants_PI-repeat_FY-2001:2025.csv.gz]] export has a subset of the data flattened and repeated for each PI.
 #+begin_src R :session :exports none
 pacman::p_load(dplyr, tidyr, ggplot2, readr)
 fmt <- function(d) mutate(d, across(is.numeric, \(x) format(x, big.mark = ",", digits=2, scientific=F)))
