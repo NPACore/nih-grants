@@ -2,7 +2,7 @@
 
 * Files
 curated files include
- * [[file:grants_PI-repeat_FY-2001:2025.csv.gz]] - row per PI, repeated grants, see [[file:get_grants.py]] and [[file:grants_to_csv.py]]
+ * [[file:grants_PI-repeat_FY-1985:2026.csv.gz]] - row per PI, repeated grants, see [[file:get_grants.py]] and [[file:grants_to_csv.py]]
  * [[file:email/emails_FY2015:2022.csv.gz]] - coalesced FoI provided emails, see [[file:email/00.2_combine_emails.R]]
 
 ~data/~ is large and not tracked. ~csv.gz~ are in LFS (~git lfs pull~) See also [[#Code]] section for more.
@@ -12,13 +12,13 @@ du -h *.csv.gz email/emails_*csv.gz data/{1985,2025}.pkl data/abstracts.csv.zip
 #+end_src
 
 #+RESULTS:
-| size | file                                 |
-|------+--------------------------------------|
-| 92M  | grants_PI-repeat_FY-2001:2025.csv.gz |
-| 19M  | email/emails_FY2015:2022.csv.gz      |
-| 110M | data/1985.pkl                        |
-| 659M | data/2025.pkl                        |
-| 962M | data/abstracts.csv.zip               |
+| size | file                                   |
+|------+----------------------------------------|
+| 154M | grants_PI-repeat_FY-1985:2026.csv.gz   |
+| 19M  | email/emails_FY2015:2022.csv.gz        |
+| 110M | data/1985.pkl                          |
+| 659M | data/2025.pkl                          |
+| 962M | data/abstracts.csv.zip                 |
 
 * Notes
 

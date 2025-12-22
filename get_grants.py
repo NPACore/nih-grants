@@ -76,7 +76,7 @@ def nih_query_all(payload:dict, msg="") -> list:
     return collected_data
 
 
-def fetch_all(years=range(2001, 2026)):
+def fetch_all(years=range(2001, 2027)):
     for year in reversed(years):
         os.makedirs('data', exist_ok=True)
         pkl_fname = f'data/{year}.pkl'
@@ -102,5 +102,5 @@ def fetch_all(years=range(2001, 2026)):
 
 
 if __name__ == "__main__":
-    years = list(range(1985, 2026))  # last year not in range
+    years = list(range(1985, 2027))  # last year not in range
     fetch_all(years)

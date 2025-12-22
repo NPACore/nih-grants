@@ -8,6 +8,8 @@ import glob
 import pickle
 import re
 
+from read_grant import read_pkl
+
 
 def study_abstract_info(g: dict):
     """
@@ -43,8 +45,7 @@ if __name__ == "__main__":
 
         for year in glob.glob("data/[12]*.pkl"):
             print(f"# {year} 0 {datetime.datetime.now()}")
-            with open(year, "rb") as f:
-                yeardata = pickle.load(f)
+            yeardata = read_pkl(year)
 
             cnt = 0
             for g in yeardata:
